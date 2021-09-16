@@ -7,6 +7,8 @@ import org.springframework.util.Assert;
 import socialmultiplication.multiplication.domain.Multiplication;
 import socialmultiplication.multiplication.domain.MultiplicationResultAttempt;
 import socialmultiplication.multiplication.domain.User;
+import socialmultiplication.multiplication.event.EventDispatcher;
+import socialmultiplication.multiplication.event.MultiplicationSolvedEvent;
 import socialmultiplication.multiplication.repository.MultiplicationResultAttemptRepository;
 import socialmultiplication.multiplication.repository.UserRepository;
 
@@ -18,12 +20,18 @@ class MultiplicationServiceImpl implements MultiplicationService {
     private RandomGeneratorService randomGeneratorService;
     private MultiplicationResultAttemptRepository attemptRepository;
     private UserRepository userRepository;
+    private EventDispatcher eventDispatcher;
+
 
     @Autowired
-    public MultiplicationServiceImpl(final RandomGeneratorService randomGeneratorService, final MultiplicationResultAttemptRepository attemptRepository, final UserRepository userRepository) {
+    public MultiplicationServiceImpl(final RandomGeneratorService randomGeneratorService,
+                                     final MultiplicationResultAttemptRepository attemptRepository,
+                                     final UserRepository userRepository,
+                                     final EventDispatcher eventDispatcher) {
         this.randomGeneratorService = randomGeneratorService;
         this.attemptRepository = attemptRepository;
         this.userRepository = userRepository;
+        this.eventDispatcher = eventDispatcher;
     }
 
 
@@ -57,11 +65,24 @@ class MultiplicationServiceImpl implements MultiplicationService {
 
         attemptRepository.save(checkedAttempt);
 
+        eventDispatcher.send(
+                new MultiplicationSolvedEvent(checkedAttempt.getId(),
+                        checkedAttempt.getUser().getId(),
+                        checkedAttempt.isCorrect()
+                )
+        );
+
         return isCorrect;
     }
 
     @Override
     public List<MultiplicationResultAttempt> getStatsForUser(String userAlias) {
         return attemptRepository.findTop5ByUserAliasOrderByIdDesc(userAlias);
+    }
+
+    @Override
+    public MultiplicationResultAttempt getResultById(Long resultId) {
+        // TODO: 문법이 바뀌었나? 일단은 맞는 것 같아 보이는걸로 넣음.
+        return attemptRepository.findById(resultId).orElseThrow();
     }
 }

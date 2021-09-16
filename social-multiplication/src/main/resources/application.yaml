@@ -13,3 +13,8 @@ spring:
     driver-class-name: org.h2.Driver
     url: jdbc:h2:file:~/social-multiplication;DB_CLOSE_ON_EXIT=FALSE;
     username: sa
+
+multiplication:
+  exchange: multiplication_exchange
+  solved:
+    key: multiplication.solved
